@@ -36,7 +36,7 @@ struct Puzzle2 {
     static func run() {
         let data = readFile(named: "puzzle2.txt")
         var entries = [Entry]()
-        let regex = try! NSRegularExpression(pattern: "(\\d*)-(\\d*) (.): (.*)", options: .caseInsensitive)
+        let regex = try! NSRegularExpression(pattern: #"(\d*)-(\d*) (.): (.*)"#, options: .caseInsensitive)
         for line in data {
             let range = NSRange(location: 0, length: line.count)
             if let match = regex.firstMatch(in: line, options: .anchored, range: range) {
