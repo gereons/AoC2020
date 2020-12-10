@@ -71,7 +71,34 @@ struct Puzzle10 {
             }
             joltage = current
         }
+        joltage += 3
 
-        print("p10a: 1-diff:\(diff1), 3-diff:\(diff3) = \(diff1*diff3)")
+        print("p10a: max joltage: \(joltage) 1-diff:\(diff1), 3-diff:\(diff3) = \(diff1*diff3)")
+
+        let paths = findPathsTo(joltage, [0] + adapters)
+        print("p10b: number of paths = \(paths)")
+    }
+
+    static func findPathsTo(_ num: Int, _ data: [Int]) -> Int {
+        var memo = [Int: Int]()
+        return findPathsTo(num, data, &memo)
+    }
+
+    static func findPathsTo(_ num: Int, _ data: [Int], _ memo: inout [Int: Int]) -> Int {
+        if num == 0 {
+            return 1
+        }
+        if let memo = memo[num] {
+            return memo
+        }
+
+        var runningTotal = 0
+        for i in 1...3 {
+            if data.contains(num - i) {
+                runningTotal += findPathsTo(num - i, data, &memo)
+            }
+        }
+        memo[num] = runningTotal
+        return runningTotal
     }
 }
