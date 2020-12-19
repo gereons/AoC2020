@@ -94,7 +94,7 @@ struct Puzzle17 {
         }
 
 
-        for generations in 0..<6 {
+        for _ in 0..<6 {
             var next = universe
 
             for x in -universe.origin+1 ... universe.origin-1 {
