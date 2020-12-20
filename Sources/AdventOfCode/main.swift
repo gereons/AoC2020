@@ -45,4 +45,5 @@ public func getGroups(_ lines: [String]) -> [String] {
 //Puzzle15.run()
 //Puzzle16.run()
 //Puzzle17.run()
-Puzzle18.run()
+//Puzzle18.run()
+Puzzle19.run()
