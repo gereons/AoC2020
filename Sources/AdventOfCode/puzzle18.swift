@@ -110,7 +110,7 @@ struct Puzzle18 {
     }
 
     static func run() {
-        let xdata = [
+        let _ = [
             "1 + (2 * 3) + (4 * (5 + 6))", // 51
             "2 * 3 + (4 * 5)", //  becomes 46.
             "5 + (8 * 3 + 9 + 3 * 4 * 3)", // becomes 1445.
