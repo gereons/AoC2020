@@ -1,50 +1,82 @@
 import Foundation
 
 struct Puzzle21 {
-    static let data = """
+    static let testData = """
     mxmxvkd kfcds sqjhc nhms (contains dairy, fish)
     trh fvjkl sbzzf mxmxvkd (contains dairy)
     sqjhc fvjkl (contains soy)
     sqjhc mxmxvkd sbzzf (contains fish)
     """.components(separatedBy: "\n")
 
-    static func run() {
-        let lines = Self.data
 
-        var xx = [String: [Set<String>]]()
+    static func run() {
+        // let lines = Self.data
+        let lines = readFile(named: "puzzle21.txt")
+
+        // allergen -> potential ingredient combos
+        var dict = [String: [[String]]]()
+        var allIngredients = [[String]]()
 
         for line in lines {
-            let parts = line.components(separatedBy: " (contains ")
-            let ingredients = parts[0].components(separatedBy: " ")
-            let allergens = parts[1].dropLast().components(separatedBy: ", ")
+            let parts = line.split(separator: "(")
+            let ingredients = parts[0].split(separator: " ").map { String($0) }
+            let allergens = parts[1].split(separator: " ").dropFirst().map { String($0.dropLast()) }
 
-            for ing in ingredients {
-                xx[ing, default: []].append(Set(allergens))
+            allIngredients.append(ingredients)
+
+            for allergen in allergens {
+                dict[allergen, default: []].append(ingredients)
             }
-
         }
-        print(xx)
-    }
-}
 
-struct PowerCollection<C : Collection> : Collection {
-    typealias Index = [C.Index]
-    typealias Element = [C.Element]
+        var identifiedAllergen = Set<String>()
+        var identifiedIngredient = Set<String>()
+        var canonicalDangerousList = [String: String]()
 
-    var startIndex, endIndex: Index
+        while identifiedAllergen.count < dict.count {
+            for allergen in dict.keys {
+                if identifiedAllergen.contains(allergen) { continue }
+                let recipes = dict[allergen]!
 
-    subscript(position: Index) -> [C.Element] {
-        return []
-    }
+                let culprit: String
+                if recipes.count == 1 {
+                    culprit = recipes[0][0]
+                } else {
+                    var counter = [String: Int]()
+                    for recipe in recipes {
+                        for ingredient in recipe {
+                            if identifiedIngredient.contains(ingredient) { continue }
+                            counter[ingredient, default: 0] += 1
+                        }
+                    }
 
-    func index(after i: Index) -> Index {
-        return i
-    }
+                    let occurrences = counter.sorted { $0.value > $1.value }
+                    if occurrences[0].value == occurrences[1].value {
+                        continue
+                    }
+                    let max = occurrences[0]
+                    culprit = max.key
+                }
+                print(culprit, "is", allergen)
+                identifiedIngredient.insert(culprit)
+                identifiedAllergen.insert(allergen)
+                canonicalDangerousList[allergen] = culprit
+            }
+        }
 
-}
+        var count = 0
+        allIngredients.forEach {
+            $0.forEach {
+                if !identifiedIngredient.contains($0) {
+                    count += 1
+                }
+            }
+        }
+        print(count)
 
-extension Array : Comparable where Element : Comparable {
-    public static func < (lhs: [Element], rhs: [Element]) -> Bool {
-        return false
+        for key in canonicalDangerousList.keys.sorted() {
+            print(canonicalDangerousList[key]!, terminator: ",")
+        }
+        print()
     }
 }
