@@ -1,10 +1,23 @@
 import Foundation
 
+// where do the puzzle input files live relative to $HOME
+let fixturePath = "Developer/AdventOfCode/AoC2020/Fixtures"
+
 public func readFile(named name: String) -> [String] {
-    let url = URL(fileURLWithPath: "/Users/gereon/dev/AdventOfCode/Fixtures/\(name)")
-    if let data = try? Data(contentsOf: url), let str = String(bytes: data, encoding: .utf8) {
-        return str.components(separatedBy: "\n")
+    // relative url, works when running with "swift run"
+    var url = URL(fileURLWithPath: "Fixtures/\(name)")
+    do {
+        _ = try url.checkResourceIsReachable()
+    } catch {
+        // absolute url, used when running from Xcode
+        if let home = ProcessInfo().environment["HOME"] {
+            url = URL(fileURLWithPath: "\(home)/\(fixturePath)/\(name)")
+        }
     }
+    if let data = try? Data(contentsOf: url), let str = String(bytes: data, encoding: .utf8) {
+        return str.split(separator: "\n", omittingEmptySubsequences: false).dropLast().map { String($0) }
+    }
+    print("OOPS: can't read \(url.absoluteURL)")
     return []
 }
 
@@ -41,14 +54,14 @@ public func getGroups(_ lines: [String]) -> [String] {
 //Puzzle11.run()
 //Puzzle12.run()
 //Puzzle13.run()
-//Puzzle14.run()
+Puzzle14.run()
 //Puzzle15.run()
 //Puzzle16.run()
 //Puzzle17.run()
 //Puzzle18.run()
 //Puzzle19.run()
-// Puzzle20.run() // tbd
-Puzzle21.run()
+//Puzzle20.run() // tbd
+//Puzzle21.run()
 //Puzzle22.run()
 //Puzzle23.run()
 //Puzzle24.run()
