@@ -2,6 +2,7 @@ import Foundation
 
 struct Puzzle24 {
     struct Point: Hashable {
+        // see https://www.redblobgames.com/grids/hexagons/
         let q, r, s: Int
     }
 
@@ -106,7 +107,7 @@ struct Puzzle24 {
             let point = Point(q: q, r: r, s: s)
             let t = grid[point, default: .white]
             grid[point] = t.flipped
-            print(point, grid[point]!)
+            // print(point, grid[point]!)
         }
 
         let black = grid.values.filter { $0 == .black }
@@ -116,11 +117,11 @@ struct Puzzle24 {
 
     static func part2(_ grid: [Point: Tile]) {
         var grid = grid
-        for day in 1...100 {
+        for _ in 1...100 {
             flipNeighbors(in: &grid)
-            let black = grid.values.filter { $0 == .black }
-            print("Day", day, black.count)
         }
+        let black = grid.values.filter { $0 == .black }
+        print(black.count)
     }
 
     private static func flipNeighbors(in grid: inout [Point: Tile]) {
@@ -128,21 +129,16 @@ struct Puzzle24 {
         let maxQ = grid.keys.map { $0.q }.max()!
         let minR = grid.keys.map { $0.r }.min()!
         let maxR = grid.keys.map { $0.r }.max()!
-        let minS = grid.keys.map { $0.s }.min()!
-        let maxS = grid.keys.map { $0.s }.max()!
 
         var flips = Set<Point>()
         for q in minQ-1...maxQ+1 {
             for r in minR-1...maxR+1 {
-                for s in minS-1...maxS+1 {
-                    let point = Point(q: q, r: r, s: s)
-                    let t = grid[point]
-                    let bn = blackNeighbors(of: point, in: grid)
-                    if t == .black && (bn == 0 || bn > 2) {
-                        flips.insert(point)
-                    } else if (t == .white || t == nil) && bn == 2 {
-                        flips.insert(point)
-                    }
+                let s = -q-r // because q+r+s==0
+                let point = Point(q: q, r: r, s: s)
+                let t = grid[point, default: .white]
+                let bn = blackNeighbors(of: point, in: grid)
+                if (t == .black && (bn == 0 || bn > 2)) || (t == .white && bn == 2) {
+                    flips.insert(point)
                 }
             }
         }
