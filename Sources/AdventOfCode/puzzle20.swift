@@ -6,13 +6,19 @@ struct Puzzle20 {
         let str: String
 
         static func ==(_ lhs: Corner, _ rhs: Corner) -> Bool {
-            return lhs.str == rhs.str ||
+            return
+                lhs.str == rhs.str ||
                 String(lhs.str.reversed()) == rhs.str ||
                 lhs.str == String(rhs.str.reversed())
         }
     }
 
     struct Corners {
+        let top: Corner
+        let left: Corner
+        let bottom: Corner
+        let right: Corner
+
         init(top: String, left: String, bottom: String, right: String) {
             self.top = Corner(str: top)
             self.left = Corner(str: left)
@@ -20,40 +26,33 @@ struct Puzzle20 {
             self.right = Corner(str: right)
         }
 
-        let top: Corner
-        let left: Corner
-        let bottom: Corner
-        let right: Corner
-
         var all: [Corner] {
             [top, left, bottom, right]
         }
-
-//        func rotate(_ r: Int) -> Corners {
-//
-//        }
     }
 
-    struct Tile {
+    struct Tile: Equatable {
         let id: Int
         let corners: Corners
 
         init(_ id: Int, _ lines: [String]) {
             self.id = id
             let left = String(lines.map { $0.first! })
-            let bottom = String(lines.map { $0.last! })
-            self.corners = Corners(top: lines[0], left: left, bottom: bottom, right: lines.last!)
+            let right = String(lines.map { $0.last! })
+            self.corners = Corners(top: lines[0], left: left, bottom: lines.last!, right: right)
+        }
+
+        static func ==(_ lhs: Tile, _ rhs: Tile) -> Bool {
+            lhs.id == rhs.id
         }
     }
 
-    struct Grid {
-        var tiles = [[Int]]()
+    class Grid {
+        private(set) var tiles = [[Int]]()
         let size: Int
-        let offset: Int
 
         init(size: Int) {
             self.size = size
-            self.offset = size / 2
             for _ in 0..<size {
                 tiles.append(Array(repeatElement(0, count: size)))
             }
@@ -61,17 +60,17 @@ struct Puzzle20 {
 
         subscript(_ x: Int, _ y: Int) -> Int {
             get {
-                tiles[y+offset][x+offset]
+                tiles[y][x]
             }
             set {
-                tiles[y+offset][x+offset] = newValue
+                tiles[y][x] = newValue
             }
         }
     }
 
     static func run() {
-        let data = Self.data
-        // let data = readFile(named: "puzzle20.txt")
+        // let data = Self.data
+        let data = readFile(named: "puzzle20.txt")
         var tiles = [Int: Tile]()
 
         var id = -1
@@ -84,144 +83,47 @@ struct Puzzle20 {
                 tiles[id] = tile
                 lines = []
             } else {
-                lines.append(line)
+                lines.append(String(line))
             }
         }
+        let tile = Tile(id, lines)
+        tiles[id] = tile
 
-        var grid = Grid(size: 10)
-        grid[0,0] = tiles.first!.key
-        fillGrid(&grid, tiles)
+        part1(tiles)
     }
 
-    static func fillGrid(_ grid: inout Grid, _ tiles: [Int: Tile]) {
-        for x in 0 ..< grid.size {
-            for y in 0 ..< grid.size {
-                let id = grid[x,y]
-                if id == 0 {
-                    continue
+    static func part1(_ tiles: [Int: Tile]) {
+        var matches = [Int: Int]()
+        for (id1, t1) in tiles {
+            for (id2, t2) in tiles {
+                if id1 == id2 { continue }
+
+                let m = matchingCorners(t1, t2)
+                matches[t1.id, default: 0] += m
+                matches[t2.id, default: 0] += m
+            }
+        }
+        print(matches)
+
+        var r = 1
+        for (id, match) in matches {
+            if match == 4 {
+                print("corner: \(id)")
+                r *= id
+            }
+        }
+        print(r)
+    }
+
+    static func matchingCorners(_ tile1: Tile, _ tile2: Tile) -> Int {
+        var cnt = 0
+        for c1 in tile1.corners.all {
+            for c2 in tile2.corners.all {
+                if c1 == c2 {
+                    cnt += 1
                 }
-                placeNeighbour(atX: x, y: y, id: id)
             }
         }
+        return cnt
     }
-
-    static func placeNeighbour(atX x: Int, y: Int, id: Int) {
-//        let offsets = [
-//                      (0, -1),
-//            (-1, 0),           (+1, 0),
-//                      (0, +1),
-//        ]
-
-    }
-
-    static let data = """
-    Tile 2311:
-    ..##.#..#.
-    ##..#.....
-    #...##..#.
-    ####.#...#
-    ##.##.###.
-    ##...#.###
-    .#.#.#..##
-    ..#....#..
-    ###...#.#.
-    ..###..###
-
-    Tile 1951:
-    #.##...##.
-    #.####...#
-    .....#..##
-    #...######
-    .##.#....#
-    .###.#####
-    ###.##.##.
-    .###....#.
-    ..#.#..#.#
-    #...##.#..
-
-    Tile 1171:
-    ####...##.
-    #..##.#..#
-    ##.#..#.#.
-    .###.####.
-    ..###.####
-    .##....##.
-    .#...####.
-    #.##.####.
-    ####..#...
-    .....##...
-
-    Tile 1427:
-    ###.##.#..
-    .#..#.##..
-    .#.##.#..#
-    #.#.#.##.#
-    ....#...##
-    ...##..##.
-    ...#.#####
-    .#.####.#.
-    ..#..###.#
-    ..##.#..#.
-
-    Tile 1489:
-    ##.#.#....
-    ..##...#..
-    .##..##...
-    ..#...#...
-    #####...#.
-    #..#.#.#.#
-    ...#.#.#..
-    ##.#...##.
-    ..##.##.##
-    ###.##.#..
-
-    Tile 2473:
-    #....####.
-    #..#.##...
-    #.##..#...
-    ######.#.#
-    .#...#.#.#
-    .#########
-    .###.#..#.
-    ########.#
-    ##...##.#.
-    ..###.#.#.
-
-    Tile 2971:
-    ..#.#....#
-    #...###...
-    #.#.###...
-    ##.##..#..
-    .#####..##
-    .#..####.#
-    #..#.#..#.
-    ..####.###
-    ..#.#.###.
-    ...#.#.#.#
-
-    Tile 2729:
-    ...#.#.#.#
-    ####.#....
-    ..#.#.....
-    ....#..#.#
-    .##..##.#.
-    .#.####...
-    ####.#.#..
-    ##.####...
-    ##..#.##..
-    #.##...##.
-
-    Tile 3079:
-    #.#.#####.
-    .#..######
-    ..#.......
-    ######....
-    ####.#..#.
-    .#...#.##.
-    #.#####.##
-    ..#.###...
-    ..#.......
-    ..#.###...
-
-    """.components(separatedBy: "\n")
 }
