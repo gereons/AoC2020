@@ -97,15 +97,24 @@ struct Puzzle20 {
         }
 
         func show() {
-            show(corners[.top]!); print()
+            if let top = corners[.top] {
+                show(top); print()
+            }
             for y in minY...maxY {
                 let yOffset = 0 - minY
-                print(corners[.left]![y+yOffset+1] ? "#" : ".", terminator: "")
+                if let left = corners[.left] {
+                    print(left[y+yOffset+1] ? "#" : ".", terminator: "")
+                }
                 show(pixels.filter { $0.key.y == y }.sorted { $0.key.x < $1.key.x }.map { $0.value })
                 // print("        ", terminator: "")
-                print(corners[.right]![y+yOffset+1] ? "#" : ".")
+                if let right = corners[.right] {
+                    print(right[y+yOffset+1] ? "#" : ".", terminator: "")
+                }
+                print()
             }
-            show(corners[.bottom]!); print()
+            if let bottom = corners[.bottom] {
+                show(bottom); print()
+            }
             print()
         }
 
@@ -135,10 +144,10 @@ struct Puzzle20 {
                 newPixels[pt] = px
             }
             var newCorners = [Corner: [Bool]]()
-            newCorners[.top] = corners[.top]!.reversed()
-            newCorners[.left] = corners[.right]!
-            newCorners[.right] = corners[.left]!
-            newCorners[.bottom] = corners[.bottom]!.reversed()
+            newCorners[.top] = corners[.top]?.reversed()
+            newCorners[.left] = corners[.right]
+            newCorners[.right] = corners[.left]
+            newCorners[.bottom] = corners[.bottom]?.reversed()
             return Tile(id, newPixels, newCorners)
         }
 
@@ -152,10 +161,10 @@ struct Puzzle20 {
                     newPixels[pt] = px
                 }
                 var newCorners = [Corner: [Bool]]()
-                newCorners[.top] = corners[.left]!.reversed()
-                newCorners[.left] = corners[.bottom]!
-                newCorners[.bottom] = corners[.right]!.reversed()
-                newCorners[.right] = corners[.top]!
+                newCorners[.top] = corners[.left]?.reversed()
+                newCorners[.left] = corners[.bottom]
+                newCorners[.bottom] = corners[.right]?.reversed()
+                newCorners[.right] = corners[.top]
                 return Tile(self.id, newPixels, newCorners)
             default: fatalError()
             }
@@ -178,13 +187,12 @@ struct Puzzle20 {
         }
 
         func findNeighbor(at point: Point) {
-            print(#function, point)
             let tile = tiles[point]!
 
             var newPoints = [Point]()
             for corner in Corner.allCases {
                 if let tile = findMatch(tile, corner) {
-                    print("\(tile.id) matches at \(corner)")
+                    // print("\(tile.id) matches at \(corner)")
                     let (dx, dy) = corner.offset
                     let pt = Point(x: point.x+dx, y: point.y+dy)
                     addToGrid(at: pt, tile: tile)
@@ -209,16 +217,43 @@ struct Puzzle20 {
         }
 
         func addToGrid(at point: Point, tile: Tile) {
-            print("add \(tile.id) at \(point)")
+            // print("add \(tile.id) at \(point)")
             assert(tiles[point] == nil)
             tiles[point] = tile
             availableTiles[tile.id] = nil
         }
+
+        func combine() -> Tile {
+            let minX = tiles.keys.map { $0.x }.min()!
+            let maxX = tiles.keys.map { $0.x }.max()!
+            let minY = tiles.keys.map { $0.y }.min()!
+            let maxY = tiles.keys.map { $0.y }.max()!
+
+            var pixels = [Point: Bool]()
+
+            for (oy, y) in (minY...maxY).enumerated() {
+                for (ox, x) in (minX...maxX).enumerated() {
+                    let pt = Point(x: x, y: y)
+                    let tile = tiles[pt]!
+                    var sy = oy * 8
+                    for ty in tile.minY...tile.maxY {
+                        var sx = ox * 8
+                        for tx in tile.minX...tile.maxX {
+                            pixels[Point(x: sx, y: sy)] = tile.pixels[Point(x: tx, y: ty)]!
+                            sx += 1
+                        }
+                        sy += 1
+                    }
+                }
+            }
+
+            return Tile(0, pixels, [:])
+        }
     }
 
     static func run() {
-        let data = Self.data
-        // let data = readFile(named: "puzzle20.txt")
+        // let data = Self.data
+        let data = readFile(named: "puzzle20.txt")
         var tiles = [Int: Tile]()
 
         var id = -1
@@ -237,7 +272,7 @@ struct Puzzle20 {
         let tile = Tile(id, lines)
         tiles[id] = tile
 
-//        part1(tiles)
+        part1(tiles)
         part2(tiles)
     }
 
@@ -290,11 +325,68 @@ struct Puzzle20 {
                 corners.append(id)
             }
         }
-        print("corners:", corners)
+        // print("corners:", corners)
 
         let grid = Grid(tiles: tiles)
         grid.start(tiles[corners[0]]!)
-        print("done!")
+
+        let tile = grid.combine()
+        // tile.show()
+
+        for t in tile.permutations() {
+            let monsters = findMonsters(in: t)
+            if monsters > 0 {
+                let roughness = t.pixels.values.filter { $0 }.count
+                print(roughness - monsters * 15)
+            }
+        }
+    }
+
+    static func findMonsters(in tile: Tile) -> Int {
+        //             1
+        //   01234567890123456789
+        // -+--------------------
+        // 0|                  #
+        // 1|#    ##    ##    ###
+        // 2| #  #  #  #  #  #
+        let monster = [
+            Point(x: 0, y: 1),
+            Point(x: 1, y: 2),
+            Point(x: 4, y: 2),
+            Point(x: 5, y: 1),
+            Point(x: 6, y: 1),
+            Point(x: 7, y: 2),
+            Point(x: 10, y: 2),
+            Point(x: 11, y: 1),
+            Point(x: 12, y: 1),
+            Point(x: 13, y: 2),
+            Point(x: 16, y: 2),
+            Point(x: 17, y: 1),
+            Point(x: 18, y: 0),
+            Point(x: 18, y: 1),
+            Point(x: 19, y: 1),
+        ]
+
+        var found = 0
+        for y in tile.minY...tile.maxY-2 {
+            for x in tile.minX...tile.maxX-19 {
+                if detect(monster, at: Point(x: x, y: y), in: tile) {
+                    // print("found at \(x),\(y)!")
+                    found += 1
+                }
+            }
+        }
+        return found
+    }
+
+    static func detect(_ monster: [Point], at point: Point, in tile: Tile) -> Bool {
+        for mp in monster {
+            let p = Point(x: point.x+mp.x, y: point.y+mp.y)
+            if tile.pixels[p] == false {
+                return false
+            }
+        }
+        return true
     }
 
     static func matchingCorners(_ tile1: Tile, _ tile2: Tile) -> Int {
