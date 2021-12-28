@@ -2,44 +2,42 @@
 import Foundation
 
 struct Puzzle20 {
-    struct Corner: Equatable {
-        let str: String
-
-        static func ==(_ lhs: Corner, _ rhs: Corner) -> Bool {
-            return
-                lhs.str == rhs.str ||
-                String(lhs.str.reversed()) == rhs.str ||
-                lhs.str == String(rhs.str.reversed())
-        }
-    }
-
-    struct Corners {
-        let top: Corner
-        let left: Corner
-        let bottom: Corner
-        let right: Corner
-
-        init(top: String, left: String, bottom: String, right: String) {
-            self.top = Corner(str: top)
-            self.left = Corner(str: left)
-            self.bottom = Corner(str: bottom)
-            self.right = Corner(str: right)
-        }
-
-        var all: [Corner] {
-            [top, left, bottom, right]
-        }
+    enum Corner {
+        case top, right, bottom, left
     }
 
     struct Tile: Equatable {
         let id: Int
-        let corners: Corners
+        let pixels: [[Bool]]
+        let corners: [Corner: [Bool]]
 
         init(_ id: Int, _ lines: [String]) {
             self.id = id
-            let left = String(lines.map { $0.first! })
-            let right = String(lines.map { $0.last! })
-            self.corners = Corners(top: lines[0], left: left, bottom: lines.last!, right: right)
+
+            var rawPixels = lines.map { line in
+                line.map { ch in ch == "#" }
+            }
+
+            var corners = [Corner: [Bool]]()
+            corners[.top] = rawPixels[0]
+            corners[.bottom] = rawPixels.last!
+
+            var left = [Bool]()
+            var right = [Bool]()
+            for i in 0..<rawPixels.count {
+                left.append(rawPixels[i][0])
+                right.append(rawPixels[i].last!)
+                rawPixels[i].remove(at: 0)
+                rawPixels[i].remove(at: rawPixels[i].count - 1)
+            }
+            corners[.left] = left
+            corners[.right] = right
+
+            rawPixels.remove(at: 0)
+            rawPixels.remove(at: rawPixels.count - 1)
+
+            self.corners = corners
+            self.pixels = rawPixels
         }
 
         static func ==(_ lhs: Tile, _ rhs: Tile) -> Bool {
@@ -47,30 +45,9 @@ struct Puzzle20 {
         }
     }
 
-    class Grid {
-        private(set) var tiles = [[Int]]()
-        let size: Int
-
-        init(size: Int) {
-            self.size = size
-            for _ in 0..<size {
-                tiles.append(Array(repeatElement(0, count: size)))
-            }
-        }
-
-        subscript(_ x: Int, _ y: Int) -> Int {
-            get {
-                tiles[y][x]
-            }
-            set {
-                tiles[y][x] = newValue
-            }
-        }
-    }
-
     static func run() {
-        // let data = Self.data
-        let data = readFile(named: "puzzle20.txt")
+        let data = Self.data
+        // let data = readFile(named: "puzzle20.txt")
         var tiles = [Int: Tile]()
 
         var id = -1
@@ -103,27 +80,31 @@ struct Puzzle20 {
                 matches[t2.id, default: 0] += m
             }
         }
-        print(matches)
+        // print(matches)
 
-        var r = 1
+        var corners = [Int]()
         for (id, match) in matches {
             if match == 4 {
-                print("corner: \(id)")
-                r *= id
+                corners.append(id)
             }
         }
-        print(r)
+        print("corners:", corners)
+        print(corners.reduce(1, *))
     }
 
     static func matchingCorners(_ tile1: Tile, _ tile2: Tile) -> Int {
         var cnt = 0
-        for c1 in tile1.corners.all {
-            for c2 in tile2.corners.all {
-                if c1 == c2 {
+        for (_, px1) in tile1.corners {
+            for (_, px2) in tile2.corners {
+                if matchCorner(px1, px2) {
                     cnt += 1
                 }
             }
         }
         return cnt
+    }
+
+    static private func matchCorner(_ px1: [Bool], _ px2: [Bool]) -> Bool {
+        return px1 == px2 || px1.reversed() == px2
     }
 }
