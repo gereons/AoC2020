@@ -121,13 +121,13 @@ struct Puzzle18 {
 
         var results = [Int]()
         for input in data {
-            print(input)
+            // print(input)
             let tokens = Tokenizer.tokenize(code: input)
             // print(tokens)
 
             let parser = Parser(tokens)
             let result = parser.parse()
-            print(result)
+            // print(result)
             results.append(result)
         }
         print(results.reduce(0, +))

@@ -269,8 +269,10 @@ struct Puzzle20 {
                 lines.append(String(line))
             }
         }
-        let tile = Tile(id, lines)
-        tiles[id] = tile
+        if !lines.isEmpty {
+            let tile = Tile(id, lines)
+            tiles[id] = tile
+        }
 
         part1(tiles)
         part2(tiles)
