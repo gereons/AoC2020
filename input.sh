@@ -21,8 +21,8 @@ cat <<END
 // Advent of Code $YR - input for day $D2
 //
 
-extension Puzzle$DAY {
-static let rawInput = #"""
+extension Day$DAY {
+static let input = #"""
 END
 
 cat $TMP
@@ -31,6 +31,6 @@ cat <<END
 """#
 }
 END
-) >Sources/puzzle$DAY+input.swift
+) >Sources/Inputs/Day$DAY+Input.swift
 
 rm $TMP
