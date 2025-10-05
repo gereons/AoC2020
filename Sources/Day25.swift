@@ -4,7 +4,7 @@
 
 import AoCTools
 
-final class Day25: AdventOfCodeDay {
+final class Day25: AdventOfCodeDay, @unchecked Sendable {
     let title: String = "Combo Breaker"
 
     let cardPubKey: Int
