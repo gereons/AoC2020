@@ -1,3 +1,5 @@
+# this repo has moved to https://codeberg.org/gereon/AoC2020
+
 # Advent Of Code 2020
 
 My [AoC 2020](https://adventofcode.com/2021) Solutions in Swift
